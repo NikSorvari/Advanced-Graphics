@@ -1,4 +1,3 @@
-package a1;
 import java.nio.*;
 import javax.swing.*;
 import static com.jogamp.opengl.GL4.*;
@@ -26,7 +25,7 @@ public class Code extends JFrame implements GLEventListener
 	{
 		GL4 gl = (GL4) GLContext.getCurrentGL();
 		float bkg[] = {1.0f, 0.0f, 0.0f, 1.0f };
-		FloatBuffer bjgBuffer = Buffers.newDirectFloatBuffer(bkg);
+		FloatBuffer bkgBuffer = Buffers.newDirectFloatBuffer(bkg);
 		gl.glClearBufferfv(GL_COLOR, 0, bkgBuffer);
 		
 	}
