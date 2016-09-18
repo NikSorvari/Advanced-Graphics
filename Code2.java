@@ -31,7 +31,7 @@ public class Code2 extends JFrame implements GLEventListener
 		gl.glClearBufferfv(GL_COLOR, 0, bkgBuffer);*/
       rendering_program = createShaderProgram();
       gl.glUseProgram(rendering_program);
-      //gl.glPointSize(30.0f);      
+      gl.glPointSize(30.0f);      
       gl.glDrawArrays(GL_POINTS, 0, 1);
 		
 	}
