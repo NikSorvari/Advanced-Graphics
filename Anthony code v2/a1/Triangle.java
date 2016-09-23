@@ -1,4 +1,4 @@
-package code;
+package a1;
 
 import java.nio.*;
 import javax.swing.*;
@@ -17,36 +17,36 @@ import java.awt.event.*;
 
 import java.lang.Math.*;
 
-public class Code extends JFrame implements GLEventListener, KeyListener, MouseWheelListener
+public class Triangle extends JFrame implements GLEventListener, KeyListener, MouseWheelListener
 {	private GLCanvas myCanvas;
    private int rendering_program;
    private int vao[] = new int[1];
    private GLSLUtils util = new GLSLUtils();
-
+   
+   private int cFlag = 0; // color change on/off flag
+   private float cf = 0.0f; // color flag for the color flag within shader
+   
+   private float inc = 0.01f; // speed for vertical movement
    private float x = 0.0f;
-   private float inc = 0.01f;
-
    private float y = 0.0f;
    
    private JPanel btnPanel;
    private JButton btnCircle;
    private JButton btnVert;
    
-   private int flag = 0;
-   private int sizeFlag = 0;
+   private int flag = 0; // flag for motion of triangle 0 = still, 1 = vertical, 2 = circle
+   private int sizeFlag = 0; // size change flag when = 1 means size needs to change
    
-   private float size;
+   private float size; // track the size incase it gets too big or too small
    
-   private int theta;
+   private int theta; // angle for circle movement
 
-   public Code()
+   public Triangle()
    {	setTitle("CSC155 a1");
-      setSize(400, 200);
-      //setLayout(new FlowLayout());
-      //setLayout(new GridLayout(0, 2));
+      setSize(500, 500);
       setLayout(new BorderLayout());
       
-      theta = 45;
+      theta = 45; // starting at 45 degrees
       
       btnPanel = new JPanel();
       btnPanel.setLayout(new FlowLayout());
@@ -58,39 +58,32 @@ public class Code extends JFrame implements GLEventListener, KeyListener, MouseW
       btnCircle.addActionListener(
             new ActionListener(){
                public void actionPerformed(ActionEvent e){
-               
-                  System.out.println("Circle");
                   flag = 2;
-                  myCanvas.requestFocus();
+                  myCanvas.requestFocus(); // keep glcanvas focused
                }
             });
         
       btnVert.addActionListener(
             new ActionListener(){
                public void actionPerformed(ActionEvent e){
-               
-                  System.out.println("Vertical");
                   flag = 1;
-                  myCanvas.requestFocus();
+                  myCanvas.requestFocus(); // keep glcanvas focused
                }
             });
         
-      
       myCanvas = new GLCanvas();
       myCanvas.addGLEventListener(this);
       myCanvas.setFocusable(true);
       myCanvas.addKeyListener(this);
       myCanvas.addMouseWheelListener(this);
    	
-      //getContentPane().add(btnPanel);
       getContentPane().add(myCanvas, BorderLayout.CENTER);
-      
       getContentPane().add(btnPanel, BorderLayout.NORTH);
-      //getContentPane().add(btnVert);
       setVisible(true);
-      myCanvas.requestFocus(); //
+      
       FPSAnimator animator = new FPSAnimator(myCanvas, 30);
       animator.start();
+      myCanvas.requestFocus();
    }
    
    public void mouseWheelMoved(MouseWheelEvent e) {
@@ -109,20 +102,24 @@ public class Code extends JFrame implements GLEventListener, KeyListener, MouseW
       
       sizeFlag = 1;
       
-      myCanvas.requestFocus();
+      myCanvas.requestFocus(); // keep glcanvas focused
    }
    
-   public void keyPressed(KeyEvent e) {
-      System.out.println("keyPressed");
+   public void keyPressed(KeyEvent e) { // unused method from interface
+      //System.out.println("keyPressed");
    }
    
-   public void keyTyped(KeyEvent e) {
-      System.out.println("keyTyped");
+   public void keyTyped(KeyEvent e) { // unused method from interface
+      //System.out.println("keyTyped");
    }
    
    public void keyReleased(KeyEvent e) {
       if(e.getKeyCode()== KeyEvent.VK_K) {
-         // change triangle color
+         if( cFlag == 0) {
+            cFlag = 1;
+         } else {
+            // do nothing
+         }
       }
    }
    
@@ -154,6 +151,19 @@ public class Code extends JFrame implements GLEventListener, KeyListener, MouseW
       gl.glDrawArrays(GL_TRIANGLES,0,3);
    
    }
+   
+   public void changeColor(GL4 gl) {
+         if(cf == 0.0f) {
+            cf = 1.0f;
+         } else {
+            cf = 0.0f;
+         }
+   
+         int offset_locc = gl.glGetUniformLocation(rendering_program, "cf");
+         gl.glProgramUniform1f(rendering_program, offset_locc, cf);
+      
+         gl.glDrawArrays(GL_TRIANGLES,0,3);
+   }
 
    public void display(GLAutoDrawable drawable)
    {	GL4 gl = (GL4) GLContext.getCurrentGL();
@@ -162,9 +172,13 @@ public class Code extends JFrame implements GLEventListener, KeyListener, MouseW
       float bkg[] = { 0.0f, 0.0f, 0.0f, 1.0f };
       FloatBuffer bkgBuffer = Buffers.newDirectFloatBuffer(bkg);
       gl.glClearBufferfv(GL_COLOR, 0, bkgBuffer);
-   
       
-      if (sizeFlag == 1) {
+      if (cFlag == 1) { // change color from key press
+         changeColor(gl);
+         cFlag = 0;
+      }
+   
+      if (sizeFlag == 1) { // change size
          int offset_locc = gl.glGetUniformLocation(rendering_program, "ins");
          gl.glProgramUniform1f(rendering_program, offset_locc, size);
       
@@ -173,8 +187,7 @@ public class Code extends JFrame implements GLEventListener, KeyListener, MouseW
          sizeFlag = 0;
       }
    
-      
-      if (flag == 0) {
+      if (flag == 0) { // triangle motion
          gl.glDrawArrays(GL_TRIANGLES,0,3);
       } 
       else if (flag == 1) {
@@ -184,13 +197,6 @@ public class Code extends JFrame implements GLEventListener, KeyListener, MouseW
          circle(gl);
       }
    	
-      
-      /*
-      int offset_loc = gl.glGetUniformLocation(rendering_program, "inc");
-   	gl.glProgramUniform1f(rendering_program, offset_loc, x);
-   
-   	gl.glDrawArrays(GL_TRIANGLES,0,3);
-      */
    }
 
    public void init(GLAutoDrawable drawable)
@@ -203,27 +209,62 @@ public class Code extends JFrame implements GLEventListener, KeyListener, MouseW
    private int createShaderProgram()
    {	GL4 gl = (GL4) GLContext.getCurrentGL();
    
-      String vshaderSource[] = util.readShaderSource("code/vert.shader");
-      String fshaderSource[] = util.readShaderSource("code/frag.shader");
+      // printing JOGL and OpenGL versions
+      System.out.println( "JOGL Version: " + Package.getPackage("com.jogamp.opengl").getImplementationVersion() );
+      System.out.println("OpenGL Version: " + gl.glGetString(GL.GL_VERSION));
+   
+      int[] vertCompiled = new int[1];
+		int[] fragCompiled = new int[1];
+		int[] linked = new int[1];
+   
+      String vshaderSource[] = util.readShaderSource("a1/vert.shader");
+      String fshaderSource[] = util.readShaderSource("a1/frag.shader");
       int lengths[];
    
       int vShader = gl.glCreateShader(GL_VERTEX_SHADER);
-      int fShader = gl.glCreateShader(GL_FRAGMENT_SHADER);
-   
       gl.glShaderSource(vShader, vshaderSource.length, vshaderSource, null, 0);
-      gl.glShaderSource(fShader, fshaderSource.length, fshaderSource, null, 0);
-   
       gl.glCompileShader(vShader);
+      
+      util.checkOpenGLError();  // can use returned boolean
+		gl.glGetShaderiv(vShader, GL_COMPILE_STATUS, vertCompiled, 0);
+		if (vertCompiled[0] == 1)
+		{	System.out.println("vertex compilation success");
+		} else
+		{	System.out.println("vertex compilation failed");
+			util.printShaderLog(vShader);
+		}
+      
+      int fShader = gl.glCreateShader(GL_FRAGMENT_SHADER);
+      gl.glShaderSource(fShader, fshaderSource.length, fshaderSource, null, 0);
       gl.glCompileShader(fShader);
+      
+      util.checkOpenGLError();  // can use returned boolean
+		gl.glGetShaderiv(fShader, GL_COMPILE_STATUS, fragCompiled, 0);
+		if (fragCompiled[0] == 1)
+		{	System.out.println("fragment compilation success");
+		} else
+		{	System.out.println("fragment compilation failed");
+			util.printShaderLog(fShader);
+		}
    
       int vfprogram = gl.glCreateProgram();
       gl.glAttachShader(vfprogram, vShader);
       gl.glAttachShader(vfprogram, fShader);
+      
       gl.glLinkProgram(vfprogram);
+      util.checkOpenGLError();
+		gl.glGetProgramiv(vfprogram, GL_LINK_STATUS, linked, 0);
+		if (linked[0] == 1)
+		{	System.out.println("linking succeeded");
+		} else
+		{	System.out.println("linking failed");
+			util.printProgramLog(vfprogram);
+		}
+      
       return vfprogram;
    }
 
-   public static void main(String[] args) { new Code(); }
+   //public static void main(String[] args) { new Triangle(); }
    public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {}
    public void dispose(GLAutoDrawable drawable) {}
 }

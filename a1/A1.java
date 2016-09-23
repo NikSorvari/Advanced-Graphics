@@ -1,4 +1,4 @@
-package code;
+package a1;
 
 import java.nio.*;
 import javax.swing.*;
@@ -21,16 +21,18 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
 	private int vao[] = new int[1];
 	private GLSLUtils util = new GLSLUtils();
 
-	private float x = 0.0f;
+	private float x = 0.0f; //coordinates for triangle
    private float y = 0.0f;
-	private float inc = 0.01f;
+	private float inc = 0.01f; // vertical movement speed
    private float size;
    private int angle;
-   private int motionType = 0;
-   private int sizeChange = 0;
-   private int colorType = 
+   private int motionType = 0; // movement style (vertical or circle)
+   private int sizeChange = 0; // flag to signal user's change in the triangle size
+   private int colorType = 0;    // triangle color (solid blue or rgb gradient)
+   private float colorFrag = 0.0f; // color flag for the  vshader
    
-   private JPanel bPanel;
+   //panel and buttons to change motion style
+   private JPanel bPanel;  
    private JButton bCircle;
    private JButton bVertical;
    
@@ -38,8 +40,8 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
    
 
 	public A1()
-	{	setTitle("Assigment 1");
-		setSize(400, 200);
+	{	setTitle("Assignment 1");
+		setSize(500, 500);
       
       setLayout(new BorderLayout());
       angle = 45;
@@ -51,6 +53,7 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
       bPanel.add(bCircle);
       bPanel.add(bVertical);
       
+      //button for vertical movement
       bVertical.addActionListener(
          new ActionListener()
          {
@@ -62,6 +65,7 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
             }
          });
       
+      //button for circular movement
       bCircle.addActionListener(
          new ActionListener()
          {
@@ -73,7 +77,7 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
             }
          });
       
-      
+      //adding elements to window
 		myCanvas = new GLCanvas();
 		myCanvas.addGLEventListener(this);
       myCanvas.setFocusable(true);
@@ -81,7 +85,7 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
       myCanvas.addMouseWheelListener(this);
       
       getContentPane().add(myCanvas, BorderLayout.CENTER);
-      getContentPane().add(bPanel, BorderLayout.NORTH);
+      getContentPane().add(bPanel, BorderLayout.SOUTH);
       
 		setVisible(true);
       myCanvas.requestFocus();
@@ -96,13 +100,15 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
    public void keyTyped(KeyEvent e) {
       System.out.println("keyTyped");
    }
-   
+   // Color changes back and forth between solid blue and gradient when k is pressed.
    public void keyReleased(KeyEvent e) {
       if(e.getKeyCode()== KeyEvent.VK_K) {
-         // change triangle color
+         if( colorType == 0)
+            colorType = 1;
       }
    }
    
+   //change triangle size when mouse wheel moves
    public void mouseWheelMoved(MouseWheelEvent e) {
       if(e.getWheelRotation() == 1) {
          size = size + 0.05f;
@@ -122,19 +128,7 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
       myCanvas.requestFocus();
    }
    
-   public void horizontal(GL4 gl) {
-   
-      x += inc;
-		if (x > 1.0f) inc = -0.01f;
-		if (x < -1.0f) inc = 0.01f;
-      
-      int offset_loc = gl.glGetUniformLocation(rendering_program, "inx");
-      gl.glProgramUniform1f(rendering_program, offset_loc, x);
-   
-      gl.glDrawArrays(GL_TRIANGLES,0,3);
-   
-   }
-   
+   //vertical motion
    public void vertical(GL4 gl) {
    
       y += inc;   
@@ -148,6 +142,7 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
    
    }
    
+   //cirular motion
    public void circle(GL4 gl) { 
    
       angle ++;
@@ -163,6 +158,19 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
       gl.glDrawArrays(GL_TRIANGLES,0,3);
    
    }
+   //triangle color change
+   public void changeColor(GL4 gl) {
+         if(colorFrag == 0.0f) {
+            colorFrag = 1.0f;
+         } else {
+            colorFrag = 0.0f;
+         }
+   
+         int offset_locc = gl.glGetUniformLocation(rendering_program, "colorFrag");
+         gl.glProgramUniform1f(rendering_program, offset_locc, colorFrag);
+      
+         gl.glDrawArrays(GL_TRIANGLES,0,3);
+   }
 
 	public void display(GLAutoDrawable drawable)
 	{	GL4 gl = (GL4) GLContext.getCurrentGL();
@@ -172,10 +180,14 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
 		FloatBuffer bkgBuffer = Buffers.newDirectFloatBuffer(bkg);
 		gl.glClearBufferfv(GL_COLOR, 0, bkgBuffer);
 
-		
+		if (colorType == 1)
+      {
+         changeColor(gl);
+         colorType = 0;
+      }
       
       if (motionType == 0)
-         horizontal(gl);
+         gl.glDrawArrays(GL_TRIANGLES,0,3);
       else if (motionType == 1)
          vertical(gl);
       else if (motionType == 2) 
@@ -201,27 +213,63 @@ public class A1 extends JFrame implements GLEventListener, KeyListener, MouseWhe
 	}
 
 	private int createShaderProgram()
-	{	GL4 gl = (GL4) GLContext.getCurrentGL();
+   {	GL4 gl = (GL4) GLContext.getCurrentGL();
+   
+      // printing JOGL and OpenGL versions
+      System.out.println( "JOGL Version: " + Package.getPackage("com.jogamp.opengl").getImplementationVersion() );
+      System.out.println("OpenGL Version: " + gl.glGetString(GL.GL_VERSION));
+   
+      int[] vertCompiled = new int[1];
+		int[] fragCompiled = new int[1];
+		int[] linked = new int[1];
+   
+      String vshaderSource[] = util.readShaderSource("a1/vert.shader");
+      String fshaderSource[] = util.readShaderSource("a1/frag.shader");
+      int lengths[];
+   
+      int vShader = gl.glCreateShader(GL_VERTEX_SHADER);
+      gl.glShaderSource(vShader, vshaderSource.length, vshaderSource, null, 0);
+      gl.glCompileShader(vShader);
+      
+      util.checkOpenGLError();  // can use returned boolean
+		gl.glGetShaderiv(vShader, GL_COMPILE_STATUS, vertCompiled, 0);
+		if (vertCompiled[0] == 1)
+		{	System.out.println("vertex compilation success");
+		} else
+		{	System.out.println("vertex compilation failed");
+			util.printShaderLog(vShader);
+		}
+      
+      int fShader = gl.glCreateShader(GL_FRAGMENT_SHADER);
+      gl.glShaderSource(fShader, fshaderSource.length, fshaderSource, null, 0);
+      gl.glCompileShader(fShader);
+      
+      util.checkOpenGLError();  // can use returned boolean
+		gl.glGetShaderiv(fShader, GL_COMPILE_STATUS, fragCompiled, 0);
+		if (fragCompiled[0] == 1)
+		{	System.out.println("fragment compilation success");
+		} else
+		{	System.out.println("fragment compilation failed");
+			util.printShaderLog(fShader);
+		}
+   
+      int vfprogram = gl.glCreateProgram();
+      gl.glAttachShader(vfprogram, vShader);
+      gl.glAttachShader(vfprogram, fShader);
+      
+      gl.glLinkProgram(vfprogram);
+      util.checkOpenGLError();
+		gl.glGetProgramiv(vfprogram, GL_LINK_STATUS, linked, 0);
+		if (linked[0] == 1)
+		{	System.out.println("linking succeeded");
+		} else
+		{	System.out.println("linking failed");
+			util.printProgramLog(vfprogram);
+		}
+      
+      return vfprogram;
+   }
 
-		String vshaderSource[] = util.readShaderSource("code/vert.shader");
-		String fshaderSource[] = util.readShaderSource("code/frag.shader");
-		int lengths[];
-
-		int vShader = gl.glCreateShader(GL_VERTEX_SHADER);
-		int fShader = gl.glCreateShader(GL_FRAGMENT_SHADER);
-
-		gl.glShaderSource(vShader, vshaderSource.length, vshaderSource, null, 0);
-		gl.glShaderSource(fShader, fshaderSource.length, fshaderSource, null, 0);
-
-		gl.glCompileShader(vShader);
-		gl.glCompileShader(fShader);
-
-		int vfprogram = gl.glCreateProgram();
-		gl.glAttachShader(vfprogram, vShader);
-		gl.glAttachShader(vfprogram, fShader);
-		gl.glLinkProgram(vfprogram);
-		return vfprogram;
-	}
 
 	public static void main(String[] args) { new A1(); }
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {}
