@@ -1,3 +1,7 @@
+//Author: Nik Sorvari
+//CSC155
+//Assignment 1
+//9-22-2016
 package a1;
 
 
