@@ -1,0 +1,1 @@
+INDEX VERSION 1.129+C:\Users\sorvarin.ECS.000\Documents\GitHub\Advanced-Graphics\.metadata\.plugins\org.eclipse.jdt.core
