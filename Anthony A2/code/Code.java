@@ -84,7 +84,7 @@ public class Code extends JFrame implements GLEventListener, KeyListener
    
    public Code()
    {	setTitle("CSC155 a2");
-      setSize(600, 600);
+      setSize(1000, 1000);
       myCanvas = new GLCanvas();
       myCanvas.addGLEventListener(this);
       myCanvas.setFocusable(true);
@@ -473,28 +473,28 @@ public class Code extends JFrame implements GLEventListener, KeyListener
       
       sphLocX = 0.0f; sphLocY = 0.0f; sphLocZ = 0.0f;
       
-      joglCenterTexture = loadTexture("earth.jpg"); // for "sun" center planet
+      joglCenterTexture = loadTexture("sun.png"); // for "sun" center planet
       centerTexture = joglCenterTexture.getTextureObject();
       
-      joglPlanet1Texture = loadTexture("brick1.jpg");
+      joglPlanet1Texture = loadTexture("earth.jpg");
       planet1Texture = joglPlanet1Texture.getTextureObject();
       
-      joglMoon1Texture = loadTexture("goat.jpg");
+      joglMoon1Texture = loadTexture("blue.png");
       moon1Texture = joglMoon1Texture.getTextureObject();
       
-      joglPlanet2Texture = loadTexture("floor_nmap.jpg");
+      joglPlanet2Texture = loadTexture("green.png");
       planet2Texture = joglPlanet2Texture.getTextureObject();
       
-      joglMoon2Texture = loadTexture("sunmap.jpg");
+      joglMoon2Texture = loadTexture("red.png");
       moon2Texture = joglMoon2Texture.getTextureObject();
       
-      joglRedTexture = loadTexture("red.jpg"); // X axis
+      joglRedTexture = loadTexture("red.png"); // X axis
       redTexture = joglRedTexture.getTextureObject();
       
-      joglGreenTexture = loadTexture("green.jpg"); // Y axis
+      joglGreenTexture = loadTexture("green.png"); // Y axis
       greenTexture = joglGreenTexture.getTextureObject();
       
-      joglBlueTexture = loadTexture("blue.jpg"); // Z axis
+      joglBlueTexture = loadTexture("blue.png"); // Z axis
       blueTexture = joglBlueTexture.getTextureObject();
    }
 
